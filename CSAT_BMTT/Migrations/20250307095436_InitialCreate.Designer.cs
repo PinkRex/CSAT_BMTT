@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CSAT_BMTT.Migrations
 {
     [DbContext(typeof(CSAT_BMTTContext))]
-    [Migration("20250307092607_FixContext")]
-    partial class FixContext
+    [Migration("20250307095436_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
