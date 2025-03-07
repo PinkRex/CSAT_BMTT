@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Security.Cryptography;
+using System.Text;
 
 namespace CSAT_BMTT.Utils
 {
@@ -7,12 +8,10 @@ namespace CSAT_BMTT.Utils
     {
         private static readonly int KEY_SIZE = 128;
         private static readonly int BLOCK_SIZE = KEY_SIZE / 8;
-        private static readonly int STATE_COLUMN = 4;               // Nb
-        private static readonly int KEY_LENGTH = KEY_SIZE / 32;     // Nk
-        private static readonly int ROUND_COUNT = KEY_LENGTH + 6;   // Nr
+        private static readonly int STATE_COLUMN = 4;
+        private static readonly int KEY_LENGTH = KEY_SIZE / 32;
+        private static readonly int ROUND_COUNT = KEY_LENGTH + 6;
 
-        private static readonly string sKey = "hoangduccsatbmtt";
-        private static readonly byte[] key = Encoding.UTF8.GetBytes(sKey);
         private static byte[,] state = new byte[4, 4];
         private static byte[] roundKey = new byte[240];
 
@@ -74,11 +73,12 @@ namespace CSAT_BMTT.Utils
             return (byte)(rsBox[num] & 0xFF);
         }
 
-        private static void KeyExpansion()
+        private static void KeyExpansion(string sKey)
         {
             int i, j;
             byte[] temp = new byte[4];
             byte k;
+            byte[] key = Encoding.UTF8.GetBytes(sKey);
 
             for (i = 0; i < KEY_LENGTH; i++)
             {
@@ -273,7 +273,7 @@ namespace CSAT_BMTT.Utils
             }
         }
 
-        private static byte[] Cipher(byte[] in_, byte[] iv)
+        private static byte[] Cipher(byte[] in_, byte[] iv, string sKey)
         {
             byte[] out_ = new byte[BLOCK_SIZE];
             int round = 0;
@@ -285,7 +285,7 @@ namespace CSAT_BMTT.Utils
                     state[j, i] = in_[i * 4 + j];
                 }
             }
-            KeyExpansion();
+            KeyExpansion(sKey);
             AddRoundKey(0);
             for (round = 1; round < ROUND_COUNT; round++)
             {
@@ -307,7 +307,7 @@ namespace CSAT_BMTT.Utils
             return out_;
         }
 
-        private static byte[] DeCipher(byte[] in_, byte[] iv)
+        private static byte[] DeCipher(byte[] in_, byte[] iv, string sKey)
         {
             byte[] out_ = new byte[BLOCK_SIZE];
             int round = 0;
@@ -318,7 +318,7 @@ namespace CSAT_BMTT.Utils
                     state[j, i] = in_[i * 4 + j];
                 }
             }
-            KeyExpansion();
+            KeyExpansion(sKey);
             AddRoundKey(ROUND_COUNT);
             for (round = ROUND_COUNT - 1; round > 0; round--)
             {
@@ -429,7 +429,26 @@ namespace CSAT_BMTT.Utils
 
         }
 
-        public static string Encrypt(string plainText, string iv)
+        public static string GenerateAesStaticKey()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            StringBuilder result = new StringBuilder(16);
+            byte[] data = new byte[16];
+
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(data);
+            }
+
+            for (int i = 0; i < 16; i++)
+            {
+                result.Append(chars[data[i] % chars.Length]);
+            }
+
+            return result.ToString();
+        }
+
+        public static string Encrypt(string plainText, string iv, string sKey)
         {
             byte[] ivb = Encoding.UTF8.GetBytes(iv);
             ivb = AddPKCS7Padding(ivb, BLOCK_SIZE);
@@ -437,12 +456,12 @@ namespace CSAT_BMTT.Utils
             byte[] rs = Array.Empty<byte>();
             foreach (byte[] b in blocks)
             {
-                rs = MergeArrays(rs, Cipher(b, ivb));
+                rs = MergeArrays(rs, Cipher(b, ivb, sKey));
             }
             return ByteArrayToHexString(rs);
         }
 
-        public static string Decrypt(string cipherText, string iv)
+        public static string Decrypt(string cipherText, string iv, string sKey)
         {
             byte[] ivb = Encoding.UTF8.GetBytes(iv);
             ivb = AddPKCS7Padding(ivb, BLOCK_SIZE);
@@ -450,7 +469,7 @@ namespace CSAT_BMTT.Utils
             byte[] rs = Array.Empty<byte>();
             foreach (byte[] b in blocks)
             {
-                rs = MergeArrays(rs, DeCipher(b, ivb));
+                rs = MergeArrays(rs, DeCipher(b, ivb, sKey));
             }
             return Encoding.UTF8.GetString(rs);
         }
