@@ -1,8 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using CSAT_BMTT.Data;
-using System;
-using System.Linq;
 
 namespace CSAT_BMTT.Models;
 
@@ -16,7 +13,7 @@ public static class SeedData
         {
             if (context.User.Any())
             {
-                return;   // DB has been seeded
+                return;
             }
             context.User.AddRange(
                 new User

@@ -20,3 +20,7 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.btn-outline-primary:hover {
+    color: white !important;
+}

@@ -4,49 +4,65 @@
     ViewData["Title"] = "Register";
 }
 
-<h2>Register</h2>
+<div class="d-flex justify-content-center align-items-center mt-4">
+    <div class="card shadow-lg p-4 rounded border border-1"
+         style="width: 600px; background-color: #fff; color: #000;">
+        <h2 class="text-center mb-4 fw-bold">Đăng ký</h2>
 
-<form asp-action="Register" method="post">
-    <div class="form-group">
-        <label asp-for="CitizenIdentificationNumber" class="control-label"></label>
-        <input asp-for="CitizenIdentificationNumber" class="form-control" />
-        <span asp-validation-for="CitizenIdentificationNumber" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="Name" class="control-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="Email" class="control-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="Birthday" class="control-label"></label>
-        <input asp-for="Birthday" class="form-control" />
-        <span asp-validation-for="Birthday" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="Password" class="control-label"></label>
-        <input asp-for="Password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="Adress" class="control-label"></label>
-        <input asp-for="Adress" class="form-control" />
-        <span asp-validation-for="Adress" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="PhoneNumber" class="control-label"></label>
-        <input asp-for="PhoneNumber" class="form-control" />
-        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="ATM" class="control-label"></label>
-        <input asp-for="ATM" class="form-control" />
-        <span asp-validation-for="ATM" class="text-danger"></span>
-    </div>
+        <form asp-action="Register" method="post">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="CitizenIdentificationNumber" class="form-label fw-semibold">Mã CCCD</label>
+                    <input asp-for="CitizenIdentificationNumber" class="form-control border" placeholder="Nhập số CCCD" required />
+                    <span asp-validation-for="CitizenIdentificationNumber" class="text-danger"></span>
+                </div>
 
-    <button type="submit" class="btn btn-primary">Register</button>
-</form>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Name" class="form-label fw-semibold">Họ và tên</label>
+                    <input asp-for="Name" class="form-control border" placeholder="Nhập họ và tên" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                    <input asp-for="Email" type="email" class="form-control border" placeholder="Nhập email" required />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Birthday" class="form-label fw-semibold">Ngày sinh</label>
+                    <input asp-for="Birthday" type="date" class="form-control border" required />
+                    <span asp-validation-for="Birthday" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Password" class="form-label fw-semibold">Mật khẩu</label>
+                    <input asp-for="Password" type="password" class="form-control border" placeholder="Nhập mật khẩu" required />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Adress" class="form-label fw-semibold">Địa chỉ</label>
+                    <input asp-for="Adress" class="form-control border" placeholder="Nhập địa chỉ" required />
+                    <span asp-validation-for="Adress" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="PhoneNumber" class="form-label fw-semibold">Số điện thoại</label>
+                    <input asp-for="PhoneNumber" type="tel" class="form-control border" placeholder="Nhập số điện thoại" required />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ATM" class="form-label fw-semibold">Số tài khoản ATM</label>
+                    <input asp-for="ATM" class="form-control border" placeholder="Nhập số tài khoản" required />
+                    <span asp-validation-for="ATM" class="text-danger"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-dark w-100 mt-3 fw-bold">
+                <i class="bi bi-person-plus"></i> Đăng ký
+            </button>
+        </form>
+    </div>
+</div>

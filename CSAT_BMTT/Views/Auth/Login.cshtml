@@ -4,18 +4,30 @@
     ViewData["Title"] = "Login";
 }
 
-<h2>Login</h2>
+<div class="d-flex justify-content-center align-items-center mt-5">
+    <div class="card shadow-lg p-5 rounded border border-1" style="width: 480px; background-color: #fff; color: #000; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);">
+        <h2 class="text-center mb-4 fw-bold">Đăng nhập</h2>
 
-<form asp-action="Login" method="post">
-    <div class="form-group">
-        <label asp-for="CitizenIdentificationNumber"></label>
-        <input asp-for="CitizenIdentificationNumber" class="form-control" />
+        <form asp-action="Login" method="post">
+            <div class="mb-4">
+                <label asp-for="CitizenIdentificationNumber" class="form-label fw-semibold">Mã CCCD</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-dark border"><i class="bi bi-person"></i></span>
+                    <input asp-for="CitizenIdentificationNumber" class="form-control border" placeholder="Nhập số CCCD" required />
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Password" class="form-label fw-semibold">Mật khẩu</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-dark border"><i class="bi bi-lock"></i></span>
+                    <input asp-for="Password" type="password" class="form-control border" placeholder="Nhập mật khẩu" required />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-dark w-100 py-2 fw-bold">
+                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+            </button>
+        </form>
     </div>
-
-    <div class="form-group">
-        <label asp-for="Password"></label>
-        <input asp-for="Password" type="password" class="form-control" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Login</button>
-</form>
+</div>

@@ -1,76 +1,61 @@
-﻿@model IEnumerable<CSAT_BMTT.Models.User>
+﻿@model CSAT_BMTT.Models.UsersViewModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "User List";
 }
 
 <h1>User List</h1>
 
-<form asp-controller="Users" asp-action="Index" method="get">
-    <p>
-        <label>Title: <input type="text" name="SearchString" /></label>
-        <input type="submit" value="Filter" />
-    </p>
-</form>
+<div class="row">
+    <!-- Current User -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4>Thông tin cá nhân</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Tên:</strong> @Model.CurrentUser?.Name</p>
+                <p><strong>Email:</strong> @Model.CurrentUser?.Email</p>
+                <p><strong>Số điện thoại:</strong> @Model.CurrentUser?.PhoneNumber</p>
+                <p><strong>Địa chỉ:</strong> @Model.CurrentUser?.Adress</p>
+            </div>
+        </div>
+    </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.CitizenIdentificationNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Birthday)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Adress)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PhoneNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ATM)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.CitizenIdentificationNumber)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Email)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Birthday)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Adress)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.PhoneNumber)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ATM)
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+    <!-- User List -->
+    <div class="col-md-8">
+        <form asp-controller="Users" asp-action="Index" method="get">
+            <p>
+                <label>Title: <input type="text" name="SearchString" /></label>
+                <input type="submit" value="Filter" />
+            </p>
+        </form>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.UsersList[0].CitizenIdentificationNumber)</th>
+                    <th>@Html.DisplayNameFor(model => model.UsersList[0].Name)</th>
+                    <th>@Html.DisplayNameFor(model => model.UsersList[0].Email)</th>
+                    <th>@Html.DisplayNameFor(model => model.UsersList[0].Birthday)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.UsersList)
+                {
+                    <tr>
+                        <td>@item.CitizenIdentificationNumber</td>
+                        <td>@item.Name</td>
+                        <td>@item.Email</td>
+                        <td>@item.Birthday</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                            @* <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> *@
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

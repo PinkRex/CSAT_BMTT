@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using CSAT_BMTT.Data;
 using CSAT_BMTT.Models;
 using System.Text;
-using System.Transactions;
 
 var builder = WebApplication.CreateBuilder(args);
 

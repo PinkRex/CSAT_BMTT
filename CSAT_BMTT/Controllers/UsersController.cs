@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CSAT_BMTT.Data;
 using CSAT_BMTT.Models;
@@ -33,7 +28,8 @@ namespace CSAT_BMTT.Controllers
             }
 
             var currentID = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
+            var currentUser = await _context.User
+                .FirstOrDefaultAsync(u => u.Id.ToString() == currentID);
             var users = await _context.User.Where(u => u.Id.ToString() != currentID).ToListAsync();
 
             if (!String.IsNullOrEmpty(searchString))
@@ -41,7 +37,13 @@ namespace CSAT_BMTT.Controllers
                 users = users.Where(s => s.Name!.ToUpper().Contains(searchString.ToUpper())).ToList();
             }
 
-            return View(users);
+            var model = new UsersViewModel
+            {
+                CurrentUser = currentUser,
+                UsersList = users
+            };
+
+            return View(model);
         }
 
         [HttpGet("details/{id}")]
@@ -62,57 +64,6 @@ namespace CSAT_BMTT.Controllers
             return View(user);
         }
 
-        // GET: Users/Edit/5
-        [HttpGet("edit/{id}")]
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return View(user);
-        }
-
-        // POST: Users/Edit/5
-        [HttpPost("edit/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,CitizenIdentificationNumber,Name,Email,Birthday,Password,Adress,PhoneNumber,ATM")] User user)
-        {
-            if (id != user.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(user);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!UserExists(user.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(user);
-        }
-
-        // GET: Users/Delete/5
         [HttpGet("delete/{id}")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -131,7 +82,6 @@ namespace CSAT_BMTT.Controllers
             return View(user);
         }
 
-        // POST: Users/Delete/5
         [HttpPost("delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

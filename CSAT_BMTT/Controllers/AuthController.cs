@@ -53,7 +53,18 @@ namespace CSAT_BMTT.Controllers
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
+            {
+                var token = GenerateJwtToken(user);
+
+                Response.Cookies.Append("access_token", token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTime.UtcNow.AddHours(1)
+                });
                 return RedirectToAction("Index", "Users");
+            }
 
             return BadRequest(result.Errors);
         }
@@ -83,7 +94,7 @@ namespace CSAT_BMTT.Controllers
 
             return RedirectToAction("Index", "Users");
         }
-        
+
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
