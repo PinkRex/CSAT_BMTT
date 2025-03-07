@@ -4,6 +4,7 @@ using CSAT_BMTT.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CSAT_BMTT.Migrations
 {
     [DbContext(typeof(CSAT_BMTTContext))]
-    partial class CSAT_BMTTContextModelSnapshot : ModelSnapshot
+    [Migration("20250307154821_AddIvKey")]
+    partial class AddIvKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,6 +63,7 @@ namespace CSAT_BMTT.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("IvKey")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
@@ -92,6 +96,7 @@ namespace CSAT_BMTT.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("StaticKey")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")

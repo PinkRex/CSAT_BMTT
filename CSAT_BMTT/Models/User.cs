@@ -7,9 +7,12 @@ namespace CSAT_BMTT.Models
     {
         public int Id { get; set; }
 
+        public string? StaticKey { get; set; }
+        public string? IvKey { get; set; }
+
         [Required]
         [Display(Name = "Citizen ID")]
-        public int CitizenIdentificationNumber { get; set; }
+        public string CitizenIdentificationNumber { get; set; }
 
         [Required]
         public string Name { get; set; }
@@ -19,17 +22,16 @@ namespace CSAT_BMTT.Models
         public string Email { get; set; }
 
         [Required]
-        [DataType(DataType.DateTime)]
-        public DateTime Birthday { get; set; }
+        public string Birthday { get; set; }
 
         [Required]
         public string Adress { get; set; }
 
         [Required]
-        [Display(Name = "Phone Number")]
-        public int PhoneNumber { get; set; }
+        [Display(Name = "Phone")]
+        public string PhoneNumber { get; set; }
 
         [Required]
-        public int ATM { get; set; }
+        public string ATM { get; set; }
     }
 }

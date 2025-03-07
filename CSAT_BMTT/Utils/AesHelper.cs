@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.ComponentModel;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace CSAT_BMTT.Utils
@@ -429,18 +430,18 @@ namespace CSAT_BMTT.Utils
 
         }
 
-        public static string GenerateAesStaticKey()
+        public static string GenerateAesStaticKey(int size)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            StringBuilder result = new StringBuilder(16);
-            byte[] data = new byte[16];
+            StringBuilder result = new StringBuilder(size);
+            byte[] data = new byte[size];
 
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(data);
             }
 
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < size; i++)
             {
                 result.Append(chars[data[i] % chars.Length]);
             }

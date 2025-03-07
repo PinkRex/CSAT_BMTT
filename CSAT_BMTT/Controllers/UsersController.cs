@@ -4,6 +4,7 @@ using CSAT_BMTT.Data;
 using CSAT_BMTT.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using CSAT_BMTT.Utils;
 
 namespace CSAT_BMTT.Controllers
 {
@@ -28,8 +29,21 @@ namespace CSAT_BMTT.Controllers
             }
 
             var currentID = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var currentUser = await _context.User
+            var currentEncryptedUser = await _context.User
                 .FirstOrDefaultAsync(u => u.Id.ToString() == currentID);
+            var currentDecryptedUser = new User
+            {
+                Id = currentEncryptedUser.Id,
+                UserName = AesHelper.Decrypt(currentEncryptedUser.CitizenIdentificationNumber.ToString(), currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+                CitizenIdentificationNumber = currentEncryptedUser.CitizenIdentificationNumber.ToString(),
+                Adress = AesHelper.Decrypt(currentEncryptedUser.Adress, currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+                ATM = AesHelper.Decrypt(currentEncryptedUser.ATM.ToString(), currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+                Birthday = AesHelper.Decrypt(currentEncryptedUser.Birthday.ToString(), currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+                Email = AesHelper.Decrypt(currentEncryptedUser.Email, currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+                Name = currentEncryptedUser.Name,
+                PhoneNumber = AesHelper.Decrypt(currentEncryptedUser.PhoneNumber.ToString(), currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+            };
+
             var users = await _context.User.Where(u => u.Id.ToString() != currentID).ToListAsync();
 
             if (!String.IsNullOrEmpty(searchString))
@@ -39,7 +53,7 @@ namespace CSAT_BMTT.Controllers
 
             var model = new UsersViewModel
             {
-                CurrentUser = currentUser,
+                CurrentUser = currentDecryptedUser,
                 UsersList = users
             };
 
@@ -72,12 +86,26 @@ namespace CSAT_BMTT.Controllers
                 return NotFound();
             }
 
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
+            var encryptedUser = await _context.User.FindAsync(id);
+            if (encryptedUser == null)
             {
                 return NotFound();
             }
-            return View(user);
+
+            // Thêm check quyền
+            var currentDecryptedUser = new User
+            {
+                UserName = AesHelper.Decrypt(encryptedUser.CitizenIdentificationNumber.ToString(), encryptedUser.IvKey, encryptedUser.StaticKey),
+                CitizenIdentificationNumber = encryptedUser.CitizenIdentificationNumber.ToString(),
+                Adress = AesHelper.Decrypt(encryptedUser.Adress, encryptedUser.IvKey, encryptedUser.StaticKey),
+                ATM = AesHelper.Decrypt(encryptedUser.ATM.ToString(), encryptedUser.IvKey, encryptedUser.StaticKey),
+                Birthday = AesHelper.Decrypt(encryptedUser.Birthday.ToString(), encryptedUser.IvKey, encryptedUser.StaticKey),
+                Email = AesHelper.Decrypt(encryptedUser.Email, encryptedUser.IvKey, encryptedUser.StaticKey),
+                Name = encryptedUser.Name,
+                PhoneNumber = AesHelper.Decrypt(encryptedUser.PhoneNumber.ToString(), encryptedUser.IvKey, encryptedUser.StaticKey),
+            };
+
+            return View(currentDecryptedUser);
         }
 
         [HttpPost("edit/{id}")]
@@ -96,12 +124,12 @@ namespace CSAT_BMTT.Controllers
                 {
                     return NotFound();
                 }
-                user.Adress = userModel.Adress;
-                user.ATM = userModel.ATM;
-                user.Birthday = userModel.Birthday;
-                user.Email = userModel.Email;
+                user.Adress = AesHelper.Encrypt(userModel.Adress, user.IvKey, user.StaticKey);
+                user.ATM = AesHelper.Encrypt(userModel.ATM, user.IvKey, user.StaticKey);
+                user.Birthday = AesHelper.Encrypt(userModel.Birthday, user.IvKey, user.StaticKey);
+                user.Email = AesHelper.Encrypt(userModel.Email, user.IvKey, user.StaticKey);
                 user.Name = userModel.Name;
-                user.PhoneNumber = userModel.PhoneNumber;
+                user.PhoneNumber = AesHelper.Encrypt(userModel.PhoneNumber, user.IvKey, user.StaticKey);
                 try
                 {
                     _context.Update(user);

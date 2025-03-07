@@ -1,4 +1,5 @@
 ﻿using CSAT_BMTT.Models;
+using CSAT_BMTT.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -46,16 +47,21 @@ namespace CSAT_BMTT.Controllers
                 return RedirectToAction("Register");
             }
 
+            var staticKey = AesHelper.GenerateAesStaticKey(16);
+            var ivKey = AesHelper.GenerateAesStaticKey(64);
+
             var user = new User
             {
-                UserName = model.CitizenIdentificationNumber.ToString(),
-                CitizenIdentificationNumber = model.CitizenIdentificationNumber,
-                Adress = model.Adress,
-                ATM = model.ATM,
-                Birthday = model.Birthday,
-                Email = model.Email,
+                StaticKey = staticKey,
+                IvKey = ivKey,
+                UserName = AesHelper.Encrypt(model.CitizenIdentificationNumber.ToString(), ivKey, staticKey),
+                CitizenIdentificationNumber = model.CitizenIdentificationNumber.ToString(),
+                Adress = AesHelper.Encrypt(model.Adress, ivKey, staticKey),
+                ATM = AesHelper.Encrypt(model.ATM.ToString(), ivKey, staticKey),
+                Birthday = AesHelper.Encrypt(model.Birthday.ToString(), ivKey, staticKey),
+                Email = AesHelper.Encrypt(model.Email, ivKey, staticKey),
                 Name = model.Name,
-                PhoneNumber = model.PhoneNumber,
+                PhoneNumber = AesHelper.Encrypt(model.PhoneNumber.ToString(), ivKey, staticKey),
             };
             var result = await _userManager.CreateAsync(user, model.Password);
 
