@@ -1,6 +1,7 @@
 ﻿using CSAT_BMTT.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -33,11 +34,17 @@ namespace CSAT_BMTT.Controllers
         public async Task<IActionResult> Register([FromForm] RegisterModel model)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            {
+                TempData["ErrorMessage"] = "Invalid infomation!";
+                return RedirectToAction("Register");
+            }
 
             var existingUser = await _userManager.FindByNameAsync(model.CitizenIdentificationNumber.ToString());
             if (existingUser != null)
-                return BadRequest(new { message = "CitizenIdentificationNumber is already taken" });
+            {
+                TempData["ErrorMessage"] = "CitizenIdentificationNumber is already taken!";
+                return RedirectToAction("Register");
+            }
 
             var user = new User
             {
@@ -65,8 +72,8 @@ namespace CSAT_BMTT.Controllers
                 });
                 return RedirectToAction("Index", "Users");
             }
-
-            return BadRequest(result.Errors);
+            TempData["ErrorMessage"] = "Invalid infomation!";
+            return RedirectToAction("Register");
         }
 
         [HttpGet("login")]
@@ -78,9 +85,12 @@ namespace CSAT_BMTT.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromForm] LoginModel model)
         {
-            var user = await _userManager.FindByNameAsync(model.CitizenIdentificationNumber);
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.CitizenIdentificationNumber.ToString() == model.CitizenIdentificationNumber);
             if (user == null || !(await _userManager.CheckPasswordAsync(user, model.Password)))
-                return Unauthorized(new { message = "Invalid username or password" });
+            {
+                TempData["ErrorMessage"] = "Invalid username or password!";
+                return RedirectToAction("Login");
+            }
 
             var token = GenerateJwtToken(user);
 

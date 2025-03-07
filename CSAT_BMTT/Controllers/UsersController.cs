@@ -64,6 +64,65 @@ namespace CSAT_BMTT.Controllers
             return View(user);
         }
 
+        [HttpGet("edit/{id}")]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var user = await _context.User.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return View(user);
+        }
+
+        [HttpPost("edit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [FromForm] User userModel)
+        {
+            if (id != userModel.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                var user = await _context.User.FindAsync(id);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+                user.Adress = userModel.Adress;
+                user.ATM = userModel.ATM;
+                user.Birthday = userModel.Birthday;
+                user.Email = userModel.Email;
+                user.Name = userModel.Name;
+                user.PhoneNumber = userModel.PhoneNumber;
+                try
+                {
+                    _context.Update(user);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!UserExists(user.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(userModel);
+        }
+
         [HttpGet("delete/{id}")]
         public async Task<IActionResult> Delete(int? id)
         {

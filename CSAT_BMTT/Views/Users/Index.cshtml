@@ -4,14 +4,17 @@
     ViewData["Title"] = "User List";
 }
 
-<h1>User List</h1>
+<h1 class="text-center fw-bold pt-3">Danh sách người dùng</h1>
 
-<div class="row">
+<div class="row justify-content-center mt-4">
     <!-- Current User -->
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h4>Thông tin cá nhân</h4>
+        <div class="card shadow-lg p-3 border border-1 rounded-3 bg-light text-dark">
+            <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white rounded-top">
+                <h5 class="mb-0">Thông tin cá nhân</h5>
+                <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.CurrentUser?.Id" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-pencil-square"></i> Sửa
+                </a>
             </div>
             <div class="card-body">
                 <p><strong>Tên:</strong> @Model.CurrentUser?.Name</p>
@@ -24,38 +27,42 @@
 
     <!-- User List -->
     <div class="col-md-8">
-        <form asp-controller="Users" asp-action="Index" method="get">
-            <p>
-                <label>Title: <input type="text" name="SearchString" /></label>
-                <input type="submit" value="Filter" />
-            </p>
+        <form asp-controller="Users" asp-action="Index" method="get" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="SearchString" class="form-control border-dark" placeholder="Tìm kiếm..." />
+                <button type="submit" class="btn btn-dark">Tìm</button>
+            </div>
         </form>
 
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>@Html.DisplayNameFor(model => model.UsersList[0].CitizenIdentificationNumber)</th>
-                    <th>@Html.DisplayNameFor(model => model.UsersList[0].Name)</th>
-                    <th>@Html.DisplayNameFor(model => model.UsersList[0].Email)</th>
-                    <th>@Html.DisplayNameFor(model => model.UsersList[0].Birthday)</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.UsersList)
-                {
+        <!-- Bọc bảng trong thẻ có thanh cuộn -->
+        <div class="shadow-lg border rounded-3 bg-light p-2" style="max-height: 450px; overflow-y: auto;">
+            <table class="table table-bordered table-hover text-dark mb-0">
+                <thead class="table-dark text-white">
                     <tr>
-                        <td>@item.CitizenIdentificationNumber</td>
-                        <td>@item.Name</td>
-                        <td>@item.Email</td>
-                        <td>@item.Birthday</td>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                            @* <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> *@
-                        </td>
+                        <th>@Html.DisplayNameFor(model => model.UsersList[0].CitizenIdentificationNumber)</th>
+                        <th>@Html.DisplayNameFor(model => model.UsersList[0].Name)</th>
+                        <th>@Html.DisplayNameFor(model => model.UsersList[0].Email)</th>
+                        <th>@Html.DisplayNameFor(model => model.UsersList[0].Birthday)</th>
+                        <th>Hành động</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.UsersList)
+                    {
+                        <tr>
+                            <td>@item.CitizenIdentificationNumber.ToString()</td>
+                            <td>@item.Name</td>
+                            <td>@item.Email</td>
+                            <td>@item.Birthday.ToString("yyyy-MM-dd")</td>
+                            <td class="text-center">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
+                                    <i class="bi bi-eye"></i> Xem
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
