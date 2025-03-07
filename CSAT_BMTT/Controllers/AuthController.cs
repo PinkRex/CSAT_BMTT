@@ -58,13 +58,11 @@ namespace CSAT_BMTT.Controllers
             return BadRequest(result.Errors);
         }
 
-
         [HttpGet("login")]
         public IActionResult Login()
         {
             return View();
         }
-
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromForm] LoginModel model)
@@ -77,15 +75,22 @@ namespace CSAT_BMTT.Controllers
 
             Response.Cookies.Append("access_token", token, new CookieOptions
             {
-                HttpOnly = true, // Ngăn JavaScript truy cập
-                Secure = true,   // Chỉ gửi qua HTTPS
+                HttpOnly = true,
+                Secure = true,
                 SameSite = SameSiteMode.Strict,
                 Expires = DateTime.UtcNow.AddHours(1)
             });
 
-            return RedirectToAction("Index", "Users"); // ✅ Redirect sau khi login thành công
+            return RedirectToAction("Index", "Users");
         }
-
+        
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            Response.Cookies.Delete("access_token");
+            await _signInManager.SignOutAsync();
+            return RedirectToAction("Index", "Home");
+        }
 
         private string GenerateJwtToken(User user)
         {
