@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using CSAT_BMTT.Data;
 using CSAT_BMTT.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace CSAT_BMTT.Controllers
 {
@@ -31,15 +32,16 @@ namespace CSAT_BMTT.Controllers
                 return Problem("Entity set 'CSAT_BMTTContext.User' is null.");
             }
 
-            var users = from u in _context.User
-                        select u;
+            var currentID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var users = await _context.User.Where(u => u.Id.ToString() != currentID).ToListAsync();
 
             if (!String.IsNullOrEmpty(searchString))
             {
-                users = users.Where(s => s.Name!.ToUpper().Contains(searchString.ToUpper()));
+                users = users.Where(s => s.Name!.ToUpper().Contains(searchString.ToUpper())).ToList();
             }
 
-            return View(await users.ToListAsync());
+            return View(users);
         }
 
         [HttpGet("details/{id}")]
@@ -78,8 +80,6 @@ namespace CSAT_BMTT.Controllers
         }
 
         // POST: Users/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost("edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,CitizenIdentificationNumber,Name,Email,Birthday,Password,Adress,PhoneNumber,ATM")] User user)

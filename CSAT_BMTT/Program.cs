@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using CSAT_BMTT.Data;
 using CSAT_BMTT.Models;
 using System.Text;
+using System.Transactions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,12 +20,12 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddDefaultTokenProviders();
 
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
+}).AddJwtBearer(options =>
 {
     options.RequireHttpsMetadata = false;
     options.SaveToken = true;
@@ -53,7 +54,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -72,6 +72,16 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Response.StatusCode == 401)
+    {
+        context.Response.Redirect("./auth/login");
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
