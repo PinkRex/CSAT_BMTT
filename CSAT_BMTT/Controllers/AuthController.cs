@@ -47,9 +47,8 @@ namespace CSAT_BMTT.Controllers
                 return RedirectToAction("Register");
             }
 
-            var pinCode = "190103";
-            var pinCodesKey = pinCode + model.CitizenIdentificationNumber[..10];
-            var pinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + model.CitizenIdentificationNumber[..10];
+            var pinCodesKey = model.PinCode + model.CitizenIdentificationNumber[..10];
+            var pinCodeIv = string.Concat(Enumerable.Repeat(model.PinCode, 9)) + model.CitizenIdentificationNumber[..10];
 
             var staticKey = AesHelper.GenerateAesStaticKey(16);
             var ivKey = AesHelper.GenerateAesStaticKey(64);

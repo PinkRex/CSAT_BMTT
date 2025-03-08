@@ -8,6 +8,9 @@ namespace CSAT_BMTT.Models
         public string CitizenIdentificationNumber { get; set; }
 
         [Required]
+        public string PinCode { get; set; }
+
+        [Required]
         public string Name { get; set; }
 
         [Required]

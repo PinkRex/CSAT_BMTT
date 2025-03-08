@@ -5,6 +5,7 @@ using CSAT_BMTT.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using CSAT_BMTT.Utils;
+using CSAT_BMTT.DTOs;
 
 namespace CSAT_BMTT.Controllers
 {
@@ -77,8 +78,7 @@ namespace CSAT_BMTT.Controllers
                 return NotFound();
             }
 
-            var user = await _context.User
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var user = await _context.User.FirstOrDefaultAsync(m => m.Id == id);
             if (user == null)
             {
                 return NotFound();
@@ -88,9 +88,9 @@ namespace CSAT_BMTT.Controllers
         }
 
         [HttpGet("edit/{id}")]
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int? id, string pinCode)
         {
-            if (id == null)
+            if (id == null || String.IsNullOrEmpty(pinCode))
             {
                 return NotFound();
             }
@@ -103,7 +103,7 @@ namespace CSAT_BMTT.Controllers
 
             // Thêm check quyền
 
-            var pinCode = "190103";
+            //var pinCode = "190103";
             var pinCodesKey = pinCode + encryptedUser.CitizenIdentificationNumber[..10];
             var pinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + encryptedUser.CitizenIdentificationNumber[..10];
 
@@ -123,12 +123,12 @@ namespace CSAT_BMTT.Controllers
                 PhoneNumber = AesHelper.Decrypt(encryptedUser.PhoneNumber, decryptedIvKey, decryptedStaticKey),
             };
 
-            return View(currentDecryptedUser);
+            return View(new UserDto(currentDecryptedUser, ""));
         }
 
         [HttpPost("edit/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [FromForm] User userModel)
+        public async Task<IActionResult> Edit(int id, [FromForm] UserDto userModel)
         {
             if (id != userModel.Id)
             {
@@ -143,12 +143,19 @@ namespace CSAT_BMTT.Controllers
                     return NotFound();
                 }
 
-                user.Adress = AesHelper.Encrypt(userModel.Adress, user.IvKey, user.StaticKey);
-                user.ATM = AesHelper.Encrypt(userModel.ATM, user.IvKey, user.StaticKey);
-                user.Birthday = AesHelper.Encrypt(userModel.Birthday, user.IvKey, user.StaticKey);
-                user.Email = AesHelper.Encrypt(userModel.Email, user.IvKey, user.StaticKey);
+                var pinCodesKey = userModel.PinCode + userModel.CitizenIdentificationNumber[..10];
+                var pinCodeIv = string.Concat(Enumerable.Repeat(userModel.PinCode, 9)) + userModel.CitizenIdentificationNumber[..10];
+
+                var decryptedPrivateKey = AesHelper.Decrypt(user.PrivateKey, pinCodeIv, pinCodesKey);
+                var decryptedIvKey = RsaHelper.Decrypt(user.IvKey, decryptedPrivateKey);
+                var decryptedStaticKey = RsaHelper.Decrypt(user.StaticKey, decryptedPrivateKey);
+
+                user.Adress = AesHelper.Encrypt(userModel.Adress, decryptedIvKey, decryptedStaticKey);
+                user.ATM = AesHelper.Encrypt(userModel.ATM, decryptedIvKey, decryptedStaticKey);
+                user.Birthday = AesHelper.Encrypt(userModel.Birthday, decryptedIvKey, decryptedStaticKey);
+                user.Email = AesHelper.Encrypt(userModel.Email, decryptedIvKey, decryptedStaticKey);
                 user.Name = userModel.Name;
-                user.PhoneNumber = AesHelper.Encrypt(userModel.PhoneNumber, user.IvKey, user.StaticKey);
+                user.PhoneNumber = AesHelper.Encrypt(userModel.PhoneNumber, decryptedIvKey, decryptedStaticKey);
                 try
                 {
                     _context.Update(user);

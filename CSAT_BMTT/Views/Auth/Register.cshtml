@@ -58,6 +58,11 @@
                     <input asp-for="ATM" class="form-control border" placeholder="Nhập số tài khoản" required />
                     <span asp-validation-for="ATM" class="text-danger"></span>
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="PinCode" class="form-label fw-semibold">Mã Pin</label>
+                    <input asp-for="PinCode" maxlength="6" class="form-control border" placeholder="Nhập mã Pin" required />
+                    <span asp-validation-for="PinCode" class="text-danger"></span>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-dark w-100 mt-3 fw-bold">
