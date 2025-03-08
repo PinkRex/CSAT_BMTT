@@ -26,10 +26,7 @@ namespace CSAT_BMTT.Controllers
         }
 
         [HttpGet("register")]
-        public IActionResult Register()
-        {
-            return View();
-        }
+        public IActionResult Register() => View();
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm] RegisterModel model)
@@ -40,51 +37,18 @@ namespace CSAT_BMTT.Controllers
                 return RedirectToAction("Register");
             }
 
-            var existingUser = await _userManager.FindByNameAsync(model.CitizenIdentificationNumber.ToString());
-            if (existingUser != null)
+            if (await _userManager.FindByNameAsync(model.CitizenIdentificationNumber.ToString()) != null)
             {
                 TempData["ErrorMessage"] = "CitizenIdentificationNumber is already taken!";
                 return RedirectToAction("Register");
             }
 
-            var pinCodesKey = model.PinCode + model.CitizenIdentificationNumber[..10];
-            var pinCodeIv = string.Concat(Enumerable.Repeat(model.PinCode, 9)) + model.CitizenIdentificationNumber[..10];
-
-            var staticKey = AesHelper.GenerateAesStaticKey(16);
-            var ivKey = AesHelper.GenerateAesStaticKey(64);
-
-            Dictionary<string, string> keys = RsaHelper.GenerateKey();
-            string publicKey = keys["public_key"];
-            string privateKey = keys["private_key"];
-
-            var user = new User
-            {
-                PrivateKey = AesHelper.Encrypt(privateKey, pinCodeIv, pinCodesKey), 
-                StaticKey = RsaHelper.Encrypt(staticKey, publicKey),
-                IvKey = RsaHelper.Encrypt(ivKey, publicKey),
-                PublicKey = publicKey,
-                UserName = AesHelper.Encrypt(model.CitizenIdentificationNumber.ToString(), ivKey, staticKey),
-                CitizenIdentificationNumber = model.CitizenIdentificationNumber.ToString(),
-                Adress = AesHelper.Encrypt(model.Adress, ivKey, staticKey),
-                ATM = AesHelper.Encrypt(model.ATM.ToString(), ivKey, staticKey),
-                Birthday = AesHelper.Encrypt(model.Birthday.ToString(), ivKey, staticKey),
-                Email = AesHelper.Encrypt(model.Email, ivKey, staticKey),
-                Name = model.Name,
-                PhoneNumber = AesHelper.Encrypt(model.PhoneNumber.ToString(), ivKey, staticKey),
-            };
+            var user = CreateUser(model);
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
-                var token = GenerateJwtToken(user);
-
-                Response.Cookies.Append("access_token", token, new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTime.UtcNow.AddHours(1)
-                });
+                SetAuthCookie(user);
                 return RedirectToAction("Index", "Users");
             }
             TempData["ErrorMessage"] = "Invalid infomation!";
@@ -92,10 +56,7 @@ namespace CSAT_BMTT.Controllers
         }
 
         [HttpGet("login")]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromForm] LoginModel model)
@@ -107,16 +68,7 @@ namespace CSAT_BMTT.Controllers
                 return RedirectToAction("Login");
             }
 
-            var token = GenerateJwtToken(user);
-
-            Response.Cookies.Append("access_token", token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(1)
-            });
-
+            SetAuthCookie(user);
             return RedirectToAction("Index", "Users");
         }
 
@@ -128,6 +80,54 @@ namespace CSAT_BMTT.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        private User CreateUser(RegisterModel model)
+        {
+            try
+            {
+                var pinCodesKey = model.PinCode + model.CitizenIdentificationNumber[..10];
+                var pinCodeIv = string.Concat(Enumerable.Repeat(model.PinCode, 9)) + model.CitizenIdentificationNumber[..10];
+                var staticKey = AesHelper.GenerateAesStaticKey(16);
+                var ivKey = AesHelper.GenerateAesStaticKey(64);
+
+                var keys = RsaHelper.GenerateKey();
+                string publicKey = keys["public_key"];
+                string privateKey = keys["private_key"];
+
+                return new User
+                {
+                    PrivateKey = AesHelper.Encrypt(privateKey, pinCodeIv, pinCodesKey),
+                    StaticKey = RsaHelper.Encrypt(staticKey, publicKey),
+                    IvKey = RsaHelper.Encrypt(ivKey, publicKey),
+                    PublicKey = publicKey,
+                    UserName = AesHelper.Encrypt(model.CitizenIdentificationNumber, ivKey, staticKey),
+                    CitizenIdentificationNumber = model.CitizenIdentificationNumber,
+                    Adress = AesHelper.Encrypt(model.Adress, ivKey, staticKey),
+                    ATM = AesHelper.Encrypt(model.ATM, ivKey, staticKey),
+                    Birthday = AesHelper.Encrypt(model.Birthday.ToString(), ivKey, staticKey),
+                    Email = AesHelper.Encrypt(model.Email, ivKey, staticKey),
+                    Name = model.Name,
+                    PhoneNumber = AesHelper.Encrypt(model.PhoneNumber, ivKey, staticKey),
+                };
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while processing your request.";
+                return null;
+            }
+        }
+
+        private void SetAuthCookie(User user)
+        {
+            var token = GenerateJwtToken(user);
+            Response.Cookies.Append("access_token", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1)
+            });
+        }
+
         private string GenerateJwtToken(User user)
         {
             var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
@@ -135,7 +135,7 @@ namespace CSAT_BMTT.Controllers
             {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName)
-        };
+            };
 
             var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
