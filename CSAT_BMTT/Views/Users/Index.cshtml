@@ -47,10 +47,14 @@
                     @foreach (var item in Model.UsersList)
                     {
                         <tr>
-                            <td>@item.CitizenIdentificationNumber.ToString()</td>
+                            <td>@item.CitizenIdentificationNumber</td>
                             <td>@item.Name</td>
-                            <td>@item.Email</td>
-                            <td>@item.Birthday.ToString()</td>
+                            <td>
+                                @(item.Email.Length > 8 ? item.Email.Substring(0, 8) + "..." : item.Email)
+                            </td>
+                            <td>
+                                @(item.Birthday.ToString().Length > 8 ? item.Birthday.ToString().Substring(0, 8) + "..." : item.Birthday.ToString())
+                            </td>
                             <td class="text-center">
                                 <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
                                     <i class="bi bi-eye"></i> Xem

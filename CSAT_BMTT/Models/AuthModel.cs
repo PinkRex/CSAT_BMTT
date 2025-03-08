@@ -5,7 +5,7 @@ namespace CSAT_BMTT.Models
     public class RegisterModel
     {
         [Required]
-        public int CitizenIdentificationNumber { get; set; }
+        public string CitizenIdentificationNumber { get; set; }
 
         [Required]
         public string Name { get; set; }
@@ -24,10 +24,10 @@ namespace CSAT_BMTT.Models
         public string Adress { get; set; }
 
         [Required]
-        public int PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; }
 
         [Required]
-        public int ATM { get; set; }
+        public string ATM { get; set; }
     }
 
     public class LoginModel
