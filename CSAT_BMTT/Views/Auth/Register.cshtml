@@ -71,12 +71,3 @@
         </form>
     </div>
 </div>
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            showToast("@TempData["ErrorMessage"]");
-        });
-    </script>
-}

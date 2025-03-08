@@ -79,7 +79,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form id="pinForm" asp-controller="Users" asp-action="Edit" asp-route-id="@Model.CurrentUser?.Id" method="get">
+            <form id="pinForm" class="me-3 ms-3" asp-controller="Users" asp-action="Edit" asp-route-id="@Model.CurrentUser?.Id" method="get">
                 <input type="hidden" name="id" value="@Model.CurrentUser?.Id" />
                 <input type="password" name="pinCode" id="pinCode" class="form-control" placeholder="Nhập mã PIN" maxlength="6">
             </form>

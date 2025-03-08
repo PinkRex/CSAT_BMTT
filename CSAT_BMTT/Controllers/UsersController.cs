@@ -72,8 +72,14 @@ namespace CSAT_BMTT.Controllers
 
             // Thêm check quyền
             var currentDecryptedUser = DecryptUser(encryptedUser, pinCode);
-
-            return View(new UserDto(currentDecryptedUser, ""));
+            if (currentDecryptedUser != null)
+            {
+                return View(new UserDto(currentDecryptedUser, ""));
+            }
+            else
+            {
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [HttpPost("edit/{id}")]
@@ -86,13 +92,17 @@ namespace CSAT_BMTT.Controllers
             {
                 var user = await _context.User.FindAsync(id);
                 if (user == null) return NotFound();
-                
-                EncryptUser(user, userModel);
+
+                var isMatchPinCode = true;
+                EncryptUser(user, userModel, isMatchPinCode);
 
                 try
                 {
-                    _context.Update(user);
-                    await _context.SaveChangesAsync();
+                    if (isMatchPinCode)
+                    {
+                        _context.Update(user);
+                        await _context.SaveChangesAsync();
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -148,30 +158,45 @@ namespace CSAT_BMTT.Controllers
 
         private User DecryptUser(User encryptedUser, string pinCode)
         {
-            var decryptedKeys = DecryptKeys(encryptedUser, pinCode);
-            return new User
+            try
             {
-                UserName = AesHelper.Decrypt(encryptedUser.CitizenIdentificationNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey),
-                CitizenIdentificationNumber = encryptedUser.CitizenIdentificationNumber,
-                Adress = AesHelper.Decrypt(encryptedUser.Adress, decryptedKeys.IvKey, decryptedKeys.StaticKey),
-                ATM = AesHelper.Decrypt(encryptedUser.ATM, decryptedKeys.IvKey, decryptedKeys.StaticKey),
-                Birthday = AesHelper.Decrypt(encryptedUser.Birthday, decryptedKeys.IvKey, decryptedKeys.StaticKey),
-                Email = AesHelper.Decrypt(encryptedUser.Email, decryptedKeys.IvKey, decryptedKeys.StaticKey),
-                Name = encryptedUser.Name,
-                PhoneNumber = AesHelper.Decrypt(encryptedUser.PhoneNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey),
-            };
+                var decryptedKeys = DecryptKeys(encryptedUser, pinCode);
+                return new User
+                {
+                    UserName = AesHelper.Decrypt(encryptedUser.CitizenIdentificationNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    CitizenIdentificationNumber = encryptedUser.CitizenIdentificationNumber,
+                    Adress = AesHelper.Decrypt(encryptedUser.Adress, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    ATM = AesHelper.Decrypt(encryptedUser.ATM, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    Birthday = AesHelper.Decrypt(encryptedUser.Birthday, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    Email = AesHelper.Decrypt(encryptedUser.Email, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    Name = encryptedUser.Name,
+                    PhoneNumber = AesHelper.Decrypt(encryptedUser.PhoneNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                };
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Invalid PIN. Please try again.";
+                return null;
+            }
         }
 
-        private void EncryptUser(User user, UserDto userModel)
+        private void EncryptUser(User user, UserDto userModel, bool isMatchPinCode)
         {
-            var decryptedKeys = DecryptKeys(user, userModel.PinCode);
-
-            user.Adress = AesHelper.Encrypt(userModel.Adress, decryptedKeys.IvKey, decryptedKeys.StaticKey);
-            user.ATM = AesHelper.Encrypt(userModel.ATM, decryptedKeys.IvKey, decryptedKeys.StaticKey);
-            user.Birthday = AesHelper.Encrypt(userModel.Birthday, decryptedKeys.IvKey, decryptedKeys.StaticKey);
-            user.Email = AesHelper.Encrypt(userModel.Email, decryptedKeys.IvKey, decryptedKeys.StaticKey);
-            user.Name = userModel.Name;
-            user.PhoneNumber = AesHelper.Encrypt(userModel.PhoneNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey);
+            try
+            {
+                var decryptedKeys = DecryptKeys(user, userModel.PinCode);
+                user.Adress = AesHelper.Encrypt(userModel.Adress, decryptedKeys.IvKey, decryptedKeys.StaticKey);
+                user.ATM = AesHelper.Encrypt(userModel.ATM, decryptedKeys.IvKey, decryptedKeys.StaticKey);
+                user.Birthday = AesHelper.Encrypt(userModel.Birthday, decryptedKeys.IvKey, decryptedKeys.StaticKey);
+                user.Email = AesHelper.Encrypt(userModel.Email, decryptedKeys.IvKey, decryptedKeys.StaticKey);
+                user.Name = userModel.Name;
+                user.PhoneNumber = AesHelper.Encrypt(userModel.PhoneNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey);
+            }
+            catch (Exception ex)
+            {
+                isMatchPinCode = false;
+                TempData["ErrorMessage"] = "Invalid PIN. Please try again.";
+            }
         }
     }
 }

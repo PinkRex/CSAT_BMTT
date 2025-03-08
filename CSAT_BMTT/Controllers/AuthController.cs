@@ -37,9 +37,21 @@ namespace CSAT_BMTT.Controllers
                 return RedirectToAction("Register");
             }
 
-            if (await _userManager.FindByNameAsync(model.CitizenIdentificationNumber.ToString()) != null)
+            if (await _userManager.Users.AnyAsync(u => u.CitizenIdentificationNumber == model.CitizenIdentificationNumber))
             {
                 TempData["ErrorMessage"] = "CitizenIdentificationNumber is already taken!";
+                return RedirectToAction("Register");
+            }
+
+            if (model.CitizenIdentificationNumber.Length < 12)
+            {
+                TempData["ErrorMessage"] = "CitizenIdentificationNumber must be 12 digits!";
+                return RedirectToAction("Register");
+            }
+
+            if (model.PinCode.Length < 6)
+            {
+                TempData["ErrorMessage"] = "Pincode must be 6 digits!";
                 return RedirectToAction("Register");
             }
 
@@ -103,7 +115,7 @@ namespace CSAT_BMTT.Controllers
                     CitizenIdentificationNumber = model.CitizenIdentificationNumber,
                     Adress = AesHelper.Encrypt(model.Adress, ivKey, staticKey),
                     ATM = AesHelper.Encrypt(model.ATM, ivKey, staticKey),
-                    Birthday = AesHelper.Encrypt(model.Birthday.ToString(), ivKey, staticKey),
+                    Birthday = AesHelper.Encrypt(model.Birthday, ivKey, staticKey),
                     Email = AesHelper.Encrypt(model.Email, ivKey, staticKey),
                     Name = model.Name,
                     PhoneNumber = AesHelper.Encrypt(model.PhoneNumber, ivKey, staticKey),

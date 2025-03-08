@@ -17,8 +17,7 @@ namespace CSAT_BMTT.Models
         public string Email { get; set; }
 
         [Required]
-        [DataType(DataType.DateTime)]
-        public DateTime Birthday { get; set; }
+        public string Birthday { get; set; }
 
         [Required]
         public string Password { get; set; }
