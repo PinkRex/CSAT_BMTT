@@ -31,17 +31,26 @@ namespace CSAT_BMTT.Controllers
             var currentID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var currentEncryptedUser = await _context.User
                 .FirstOrDefaultAsync(u => u.Id.ToString() == currentID);
+
+            var pinCode = "190103";
+            var pinCodesKey = pinCode + currentEncryptedUser.CitizenIdentificationNumber[..10];
+            var pinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + currentEncryptedUser.CitizenIdentificationNumber[..10];
+
+            var decryptedPrivateKey = AesHelper.Decrypt(currentEncryptedUser.PrivateKey, pinCodeIv, pinCodesKey);
+            var decryptedIvKey = RsaHelper.Decrypt(currentEncryptedUser.IvKey, decryptedPrivateKey);
+            var decryptedStaticKey = RsaHelper.Decrypt(currentEncryptedUser.StaticKey, decryptedPrivateKey);
+
             var currentDecryptedUser = new User
             {
                 Id = currentEncryptedUser.Id,
-                UserName = AesHelper.Decrypt(currentEncryptedUser.CitizenIdentificationNumber.ToString(), currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+                UserName = AesHelper.Decrypt(currentEncryptedUser.CitizenIdentificationNumber.ToString(), decryptedIvKey, decryptedStaticKey),
                 CitizenIdentificationNumber = currentEncryptedUser.CitizenIdentificationNumber.ToString(),
-                Adress = AesHelper.Decrypt(currentEncryptedUser.Adress, currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
-                ATM = AesHelper.Decrypt(currentEncryptedUser.ATM.ToString(), currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
-                Birthday = AesHelper.Decrypt(currentEncryptedUser.Birthday.ToString(), currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
-                Email = AesHelper.Decrypt(currentEncryptedUser.Email, currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+                Adress = AesHelper.Decrypt(currentEncryptedUser.Adress, decryptedIvKey, decryptedStaticKey),
+                ATM = AesHelper.Decrypt(currentEncryptedUser.ATM.ToString(), decryptedIvKey, decryptedStaticKey),
+                Birthday = AesHelper.Decrypt(currentEncryptedUser.Birthday.ToString(), decryptedIvKey, decryptedStaticKey),
+                Email = AesHelper.Decrypt(currentEncryptedUser.Email, decryptedIvKey, decryptedStaticKey),
                 Name = currentEncryptedUser.Name,
-                PhoneNumber = AesHelper.Decrypt(currentEncryptedUser.PhoneNumber.ToString(), currentEncryptedUser.IvKey, currentEncryptedUser.StaticKey),
+                PhoneNumber = AesHelper.Decrypt(currentEncryptedUser.PhoneNumber.ToString(), decryptedIvKey, decryptedStaticKey),
             };
 
             var users = await _context.User.Where(u => u.Id.ToString() != currentID).ToListAsync();
@@ -93,16 +102,25 @@ namespace CSAT_BMTT.Controllers
             }
 
             // Thêm check quyền
+
+            var pinCode = "190103";
+            var pinCodesKey = pinCode + encryptedUser.CitizenIdentificationNumber[..10];
+            var pinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + encryptedUser.CitizenIdentificationNumber[..10];
+
+            var decryptedPrivateKey = AesHelper.Decrypt(encryptedUser.PrivateKey, pinCodeIv, pinCodesKey);
+            var decryptedIvKey = RsaHelper.Decrypt(encryptedUser.IvKey, decryptedPrivateKey);
+            var decryptedStaticKey = RsaHelper.Decrypt(encryptedUser.StaticKey, decryptedPrivateKey);
+
             var currentDecryptedUser = new User
             {
-                UserName = AesHelper.Decrypt(encryptedUser.CitizenIdentificationNumber.ToString(), encryptedUser.IvKey, encryptedUser.StaticKey),
-                CitizenIdentificationNumber = encryptedUser.CitizenIdentificationNumber.ToString(),
-                Adress = AesHelper.Decrypt(encryptedUser.Adress, encryptedUser.IvKey, encryptedUser.StaticKey),
-                ATM = AesHelper.Decrypt(encryptedUser.ATM.ToString(), encryptedUser.IvKey, encryptedUser.StaticKey),
-                Birthday = AesHelper.Decrypt(encryptedUser.Birthday.ToString(), encryptedUser.IvKey, encryptedUser.StaticKey),
-                Email = AesHelper.Decrypt(encryptedUser.Email, encryptedUser.IvKey, encryptedUser.StaticKey),
+                UserName = AesHelper.Decrypt(encryptedUser.CitizenIdentificationNumber, decryptedIvKey, decryptedStaticKey),
+                CitizenIdentificationNumber = encryptedUser.CitizenIdentificationNumber,
+                Adress = AesHelper.Decrypt(encryptedUser.Adress, decryptedIvKey, decryptedStaticKey),
+                ATM = AesHelper.Decrypt(encryptedUser.ATM, decryptedIvKey, decryptedStaticKey),
+                Birthday = AesHelper.Decrypt(encryptedUser.Birthday, decryptedIvKey, decryptedStaticKey),
+                Email = AesHelper.Decrypt(encryptedUser.Email, decryptedIvKey, decryptedStaticKey),
                 Name = encryptedUser.Name,
-                PhoneNumber = AesHelper.Decrypt(encryptedUser.PhoneNumber.ToString(), encryptedUser.IvKey, encryptedUser.StaticKey),
+                PhoneNumber = AesHelper.Decrypt(encryptedUser.PhoneNumber, decryptedIvKey, decryptedStaticKey),
             };
 
             return View(currentDecryptedUser);
@@ -124,6 +142,7 @@ namespace CSAT_BMTT.Controllers
                 {
                     return NotFound();
                 }
+
                 user.Adress = AesHelper.Encrypt(userModel.Adress, user.IvKey, user.StaticKey);
                 user.ATM = AesHelper.Encrypt(userModel.ATM, user.IvKey, user.StaticKey);
                 user.Birthday = AesHelper.Encrypt(userModel.Birthday, user.IvKey, user.StaticKey);

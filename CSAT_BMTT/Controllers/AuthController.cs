@@ -47,13 +47,23 @@ namespace CSAT_BMTT.Controllers
                 return RedirectToAction("Register");
             }
 
+            var pinCode = "190103";
+            var pinCodesKey = pinCode + model.CitizenIdentificationNumber[..10];
+            var pinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + model.CitizenIdentificationNumber[..10];
+
             var staticKey = AesHelper.GenerateAesStaticKey(16);
             var ivKey = AesHelper.GenerateAesStaticKey(64);
 
+            Dictionary<string, string> keys = RsaHelper.GenerateKey();
+            string publicKey = keys["public_key"];
+            string privateKey = keys["private_key"];
+
             var user = new User
             {
-                StaticKey = staticKey,
-                IvKey = ivKey,
+                PrivateKey = AesHelper.Encrypt(privateKey, pinCodeIv, pinCodesKey), 
+                StaticKey = RsaHelper.Encrypt(staticKey, publicKey),
+                IvKey = RsaHelper.Encrypt(ivKey, publicKey),
+                PublicKey = publicKey,
                 UserName = AesHelper.Encrypt(model.CitizenIdentificationNumber.ToString(), ivKey, staticKey),
                 CitizenIdentificationNumber = model.CitizenIdentificationNumber.ToString(),
                 Adress = AesHelper.Encrypt(model.Adress, ivKey, staticKey),

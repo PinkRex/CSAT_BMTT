@@ -6,9 +6,10 @@ namespace CSAT_BMTT.Models
     public class User : IdentityUser
     {
         public int Id { get; set; }
-
         public string? StaticKey { get; set; }
         public string? IvKey { get; set; }
+        public string? PublicKey { get; set; }
+        public string? PrivateKey { get; set; }
 
         [Required]
         [Display(Name = "Citizen ID")]
