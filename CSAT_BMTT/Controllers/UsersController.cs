@@ -65,19 +65,20 @@ namespace CSAT_BMTT.Controllers
             return View(user);
         }
 
-        [HttpGet("edit/{id}")]
-        public async Task<IActionResult> Edit(int? id, string pinCode)
+        [HttpPost("edit/{id}")]
+        [ActionName("EditPin")]
+        public async Task<IActionResult> EditPin([FromForm] PinCodeDto pinCodeDto)
         {
-            if (id == null || String.IsNullOrEmpty(pinCode)) return NotFound();
+            if (string.IsNullOrEmpty(pinCodeDto.PinCode)) return NotFound();
 
-            var encryptedUser = await _context.User.FindAsync(id);
+            var encryptedUser = await _context.User.FindAsync(pinCodeDto.Id);
             if (encryptedUser == null) return NotFound();
 
             // Thêm check quyền
-            var currentDecryptedUser = DecryptUser(encryptedUser, pinCode);
+            var currentDecryptedUser = DecryptUser(encryptedUser, pinCodeDto.PinCode);
             if (currentDecryptedUser != null)
             {
-                return View(new UserDto(currentDecryptedUser, ""));
+                return View("Edit", new UserDto(currentDecryptedUser, ""));
             }
             else
             {
@@ -85,15 +86,13 @@ namespace CSAT_BMTT.Controllers
             }
         }
 
-        [HttpPost("edit/{id}")]
+        [HttpPost("edituser")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [FromForm] UserDto userModel)
+        public async Task<IActionResult> EditUser([FromForm] UserDto userModel)
         {
-            if (id != userModel.Id) return NotFound();
-
             if (ModelState.IsValid)
             {
-                var user = await _context.User.FindAsync(id);
+                var user = await _context.User.FindAsync(userModel.Id);
                 if (user == null) return NotFound();
 
                 var isMatchPinCode = true;

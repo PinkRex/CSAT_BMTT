@@ -1,0 +1,13 @@
+﻿@model AccessPermissionModel
+
+@{
+    ViewData["Title"] = "Access Permissions";
+}
+
+<h1>Hello From Access Permissions</h1>
+<h3>RequestorId: @Model.RequestorID</h3>
+<h3>TargetId: @Model.TargetId</h3>
+<h3>RequestorPublicKey: @Model.RequestorPublicKey</h3>
+<h3>TargetIvKey: @Model.TargetIvKey</h3>
+<h3>TargetStaticKey: @Model.TargetStaticKey</h3>
+<h3>Status: @Model.Status</h3>

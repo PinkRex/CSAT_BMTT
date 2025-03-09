@@ -25,4 +25,10 @@ namespace CSAT_BMTT.DTOs
             this.PinCode = pinCode;
         }
     }
+
+    public class PinCodeDto
+    {
+        public int Id { get; set; }
+        public string? PinCode { get; set; }
+    }
 }

@@ -4,6 +4,7 @@ using CSAT_BMTT.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CSAT_BMTT.Migrations
 {
     [DbContext(typeof(CSAT_BMTTContext))]
-    partial class CSAT_BMTTContextModelSnapshot : ModelSnapshot
+    [Migration("20250309090146_AddMoreFieldToAccessPermission")]
+    partial class AddMoreFieldToAccessPermission
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,10 +52,6 @@ namespace CSAT_BMTT.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("RequestorID");
-
-                    b.HasIndex("TargetId");
 
                     b.ToTable("AccessPermission");
                 });
@@ -144,25 +143,6 @@ namespace CSAT_BMTT.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("User");
-                });
-
-            modelBuilder.Entity("CSAT_BMTT.Models.AccessPermissionModel", b =>
-                {
-                    b.HasOne("CSAT_BMTT.Models.User", "Requestor")
-                        .WithMany()
-                        .HasForeignKey("RequestorID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CSAT_BMTT.Models.User", "Target")
-                        .WithMany()
-                        .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Requestor");
-
-                    b.Navigation("Target");
                 });
 #pragma warning restore 612, 618
         }
