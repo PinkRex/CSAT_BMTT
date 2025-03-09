@@ -44,6 +44,8 @@ namespace CSAT_BMTT.Controllers
                 users = users.Where(u => u.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
+            MaskUsersInfo(users);
+
             var model = new UsersViewModel
             {
                 CurrentUser = currentDecryptedUser,
@@ -59,6 +61,7 @@ namespace CSAT_BMTT.Controllers
             if (id == null) return NotFound();
             var user = await _context.User.FirstOrDefaultAsync(m => m.Id == id);
             if (user == null) return NotFound();
+            MaskUserInfo(user);
             return View(user);
         }
 
@@ -142,6 +145,29 @@ namespace CSAT_BMTT.Controllers
         private bool UserExists(int id)
         {
             return _context.User.Any(e => e.Id == id);
+        }
+
+        private void MaskUsersInfo(List<User> users)
+        {
+            if (users == null || users.Count == 0) return;
+            foreach (var user in users)
+            {
+                MaskUserInfo(user);
+            }
+        }
+
+        private void MaskUserInfo(User user)
+        {
+            if (user == null) return;
+            foreach (var prop in typeof(User).GetProperties()
+                .Where(p => p.PropertyType == typeof(string) && p.CanWrite))
+            {
+                if (prop.Name != nameof(user.CitizenIdentificationNumber)
+                    && prop.Name != nameof(user.Name))
+                {
+                    prop.SetValue(user, "********");
+                }
+            }
         }
 
         private (string IvKey, string StaticKey) DecryptKeys(User user, string pinCode)
