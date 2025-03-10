@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using CSAT_BMTT.Data;
 using CSAT_BMTT.Models;
 using System.Text;
+using CSAT_BMTT.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,7 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -84,6 +86,7 @@ app.Use(async (context, next) =>
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHub<PermissionHub>("/permissionHub");
 
 app.MapControllerRoute(
     name: "default",
