@@ -5,6 +5,7 @@ using CSAT_BMTT.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using System.Security.Claims;
 
 namespace CSAT_BMTT.Controllers
@@ -137,6 +138,10 @@ namespace CSAT_BMTT.Controllers
             {
                 await ApproveRequest(id, pinCode);
             }
+            else
+            {
+                await DeclineRequest(id, isAccept);
+            }
             return RedirectToAction("RequestList");
         }
 
@@ -171,16 +176,29 @@ namespace CSAT_BMTT.Controllers
                 _context.AccessPermission.Update(accessPermission);
                 await _context.SaveChangesAsync();
 
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Invalid PIN. Please try again.";
                 return;
             }
         }
 
-        public void DeclineRequest([FromForm] int? id)
+        public async Task DeclineRequest(int? id, string isAccept)
         {
-            Console.WriteLine(id);
+            var accessPermission = await _context.AccessPermission.FindAsync(id);
+            accessPermission.TargetIvKey = null;
+            accessPermission.TargetStaticKey = null;
+            if (isAccept == "0")
+            {
+                accessPermission.Status = AccessPermissionStatus.Declined;
+            }
+            else if (isAccept == "2") 
+            {
+                accessPermission.Status = AccessPermissionStatus.Pending;
+            }
+            _context.AccessPermission.Update(accessPermission);
+            await _context.SaveChangesAsync();
         }
     }
 }

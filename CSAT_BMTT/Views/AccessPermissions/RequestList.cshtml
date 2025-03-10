@@ -49,9 +49,9 @@
                                     }
                                     else
                                     {
-                                        <form class="me-3 ms-3" asp-controller="" asp-action="" method="post">
+                                        <form class="me-3 ms-3" asp-controller="AccessPermissions" asp-action="ProcessRequest" method="post">
                                             <input type="hidden" name="id" value="@item.Id" />
-                                            <input type="hidden" name="isAccept" value="0" />
+                                            <input type="hidden" name="isAccept" value="2" />
                                             <button type="submit" class="btn btn-outline-dark">Remove Permission</button>
                                         </form>
                                     }
