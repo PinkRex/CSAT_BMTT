@@ -25,15 +25,37 @@
                             <th>Citizen ID</th>
                             <th>Name</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.RequestSentList)
+                        @foreach (var item in Model.RequestRecievedList)
                         {
                             <tr>
                                 <td>@item.CitizenIdentificationNumber</td>
                                 <td>@item.CitizenName</td>
                                 <td>@item.Status</td>
+                                <td class="d-flex">
+                                    @if (item.Status == "0")
+                                    {
+                                        <form class="me-3 ms-3" asp-controller="AccessPermissions" asp-action="ProcessRequest" method="post">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="isAccept" value="0" />
+                                            <button type="submit" class="btn btn-outline-dark">Decline</button>
+                                        </form>
+                                        <button type="button" class="btn btn-dark processPermisison-btn" data-id="@item.Id" data-isAccept="1">
+                                            Approve
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <form class="me-3 ms-3" asp-controller="" asp-action="" method="post">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="isAccept" value="0" />
+                                            <button type="submit" class="btn btn-outline-dark">Remove Permission</button>
+                                        </form>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -49,28 +71,43 @@
                             <th>Citizen ID</th>
                             <th>Name</th>
                             <th>Status</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.RequestRecievedList)
+                        @foreach (var item in Model.RequestSentList)
                         {
                             <tr>
                                 <td>@item.CitizenIdentificationNumber</td>
                                 <td>@item.CitizenName</td>
                                 <td>@item.Status</td>
-                                <td>
-                                    <a asp-action="" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
-                                        <i class="bi bi-eye"></i> Decline
-                                    </a>
-                                    <a asp-action="" asp-route-id="@item.Id" class="btn btn-dark btn-sm">
-                                        <i class="bi bi-eye"></i> Approve
-                                    </a>
-                                </td>
                             </tr>
                         }
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="pinModal" tabindex="-1" aria-labelledby="pinModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pinModalLabel">Enter PIN Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="pinForm" method="post" asp-controller="AccessPermissions" asp-action="ProcessRequest">
+                    <input type="hidden" name="id" id="requestId" value="" />
+                    <input type="hidden" name="isAccept" id="isAccept" value="" />
+                    <div class="mb-3">
+                        <input type="password" name="pinCode" id="pinCode" class="form-control" placeholder="Enter PIN Code" maxlength="6" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-dark">Confirm</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -98,14 +135,22 @@
             dataType: "json",
             success: function (data) {
                 let requestReceivedList = Object.values(data);
-                $("#tab2 tbody").empty();
+                $("#tab1 tbody").empty();
                 if (Array.isArray(requestReceivedList) && requestReceivedList.length > 0) {
                     requestReceivedList.forEach(request => {
-                        $("#tab2 tbody").append(`
+                        $("#tab1 tbody").append(`
                             <tr>
                                 <td>${request.citizenIdentificationNumber}</td>
                                 <td>${request.citizenName}</td>
                                 <td>${request.status}</td>
+                                <td class="d-flex">
+                                    <form class="me-3 ms-3" asp-controller="AccessPermissions" asp-action="ProcessRequest" method="post">
+                                        <input type="hidden" name="id" value="${request.Id}" />
+                                        <input type="hidden" name="isAccept" value="0" />
+                                        <button type="submit" class="btn btn-outline-dark">Decline</button>
+                                    </form>
+                                    <button type="button" class="btn btn-dark processPermisison-btn" data-id="${request.Id}" data-isAccept="1">Approve</button>
+                                </td>
                             </tr>
                         `);
                     });
@@ -118,4 +163,18 @@
             }
         });
     }
+    
+    document.addEventListener("DOMContentLoaded", function () {
+        document.body.addEventListener("click", function (event) {
+            if (event.target.classList.contains("processPermisison-btn")) {
+                let requestId = event.target.getAttribute("data-id");
+                let isAccept = event.target.getAttribute("data-isAccept");
+                document.getElementById("requestId").value = requestId;
+                document.getElementById("isAccept").value = isAccept;
+                let pinModal = new bootstrap.Modal(document.getElementById("pinModal"));
+                pinModal.show();
+            }
+        });
+    });
+
 </script>

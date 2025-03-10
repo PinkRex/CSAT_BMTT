@@ -1,10 +1,13 @@
 ﻿using CSAT_BMTT.Data;
 using CSAT_BMTT.Hubs;
 using CSAT_BMTT.Models;
+using CSAT_BMTT.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Transactions;
 
 namespace CSAT_BMTT.Controllers
@@ -21,7 +24,7 @@ namespace CSAT_BMTT.Controllers
             _hubContext = hubContext;
         }
 
-        [HttpPost]
+        [HttpPost("CreatePermissionRequest")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePermissionRequest([FromForm] int targetId)
         {
@@ -39,7 +42,7 @@ namespace CSAT_BMTT.Controllers
                 TempData["ErrorMessage"] = "User does not exist!";
             }
             bool isDuplicateRequest = await _context.AccessPermission
-                .AnyAsync(ap => ap.RequestorID == int.Parse(requestorId) && ap.TargetId == targetId);
+                .AnyAsync(ap => ap.RequestorID == int.Parse(requestorId) && ap.TargetId == targetId && ap.Status == AccessPermissionStatus.Pending);
 
             if (isDuplicateRequest)
             {
@@ -130,14 +133,50 @@ namespace CSAT_BMTT.Controllers
             return Ok(requestReceivedList);
         }
 
-        public void ApproveRequest()
+        [HttpPost("ProcessRequest")]
+        public async Task<IActionResult> ProcessRequest([FromForm] int? id, [FromForm] string pinCode, [FromForm] string isAccept)
         {
-
+            if (isAccept == "1")
+            {
+                await ApproveRequest(id, pinCode);
+            }
+            return RedirectToAction("RequestList");
         }
 
-        public void DeclineRequest()
+        public async Task ApproveRequest(int? id, string pinCode)
         {
+            var approverId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var approver = await _context.User.FindAsync(int.Parse(approverId));
+            if (approver == null)
+            {
+                TempData["ErrorMessage"] = "User does not exist!";
+                return;
+            }
 
+            var approverPinCodesKey = pinCode + approver.CitizenIdentificationNumber[..10];
+            var approverPinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + approver.CitizenIdentificationNumber[..10];
+            var decryptedApproverPrivateKey = AesHelper.Decrypt(approver.PrivateKey, approverPinCodeIv, approverPinCodesKey);
+
+            var approverIvKey = RsaHelper.Decrypt(approver.IvKey, decryptedApproverPrivateKey);
+            var approverStaticKey = RsaHelper.Decrypt(approver.StaticKey, decryptedApproverPrivateKey);
+
+            var accessPermission = await _context.AccessPermission.FindAsync(id);
+
+            // Mã hóa với publicKey của requestor
+            var encryptIvKey = RsaHelper.Encrypt(approverIvKey, accessPermission.RequestorPublicKey);
+            var encryptStaticKey = RsaHelper.Encrypt(approverStaticKey, accessPermission.RequestorPublicKey);
+
+            accessPermission.TargetIvKey = encryptIvKey;
+            accessPermission.TargetStaticKey = encryptStaticKey;
+            accessPermission.Status = AccessPermissionStatus.Approved;
+
+            _context.AccessPermission.Update(accessPermission);
+            await _context.SaveChangesAsync();
+        }
+
+        public void DeclineRequest([FromForm] int? id)
+        {
+            Console.WriteLine(id);
         }
     }
 }
