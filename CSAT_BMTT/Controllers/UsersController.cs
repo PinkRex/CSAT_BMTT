@@ -19,7 +19,7 @@ namespace CSAT_BMTT.Controllers
         public UsersController(CSAT_BMTTContext context) => _context = context;
 
         [HttpGet]
-        public async Task<IActionResult> Index(string? searchString)
+        public async Task<IActionResult> Index(string? searchString,string? pinCode)
         {
             if (_context.User == null)
             {
@@ -44,7 +44,36 @@ namespace CSAT_BMTT.Controllers
                 users = users.Where(u => u.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
-            MaskUsersInfo(users);
+            if (!string.IsNullOrEmpty(pinCode))
+            {
+                var accessPermissions = await _context.AccessPermission
+                    .Where(ap => ap.RequestorID == int.Parse(currentUserId) && ap.Status == AccessPermissionStatus.Approved)
+                    .ToListAsync();
+                var approvedUsersId = accessPermissions.Select(ap => ap.TargetId).ToList();
+
+                var approvedUsers = users.Where(u => approvedUsersId.Contains(u.Id)).ToList();
+
+                for (var i = 0; i < approvedUsers.Count; i++)
+                {
+                    approvedUsers[i] = DecryptUser(approvedUsers[i], pinCode);
+                }
+
+                if (!TempData.Any())
+                {
+                    users.RemoveAll(u => approvedUsersId.Contains(u.Id));
+                    MaskUsersInfo(users);
+
+                    users.InsertRange(0, approvedUsers);
+                }
+                else
+                {
+                    MaskUsersInfo(users);
+                }
+            }
+            else
+            {
+                MaskUsersInfo(users);
+            }
 
             var model = new UsersViewModel
             {
@@ -53,54 +82,6 @@ namespace CSAT_BMTT.Controllers
             };
 
             return View(model);
-        }
-
-        [HttpPost("ShowApprovedUsers")]
-        public async Task<IActionResult> ShowApprovedUsers([FromForm] string pinCode)
-        {
-            if (_context.User == null)
-            {
-                return Problem("Entity set 'CSAT_BMTTContext.User' is null.");
-            }
-
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var currentUser = await _context.User.FindAsync(int.Parse(currentUserId));
-            if (currentUser == null) return Unauthorized();
-
-            var currentDecryptedUser = new User
-            {
-                Id = currentUser.Id,
-                CitizenIdentificationNumber = currentUser.CitizenIdentificationNumber,
-                Name = currentUser.Name
-            };
-
-            var users = await _context.User.Where(u => u.Id.ToString() != currentUserId).ToListAsync();
-            var accessPermissions = await _context.AccessPermission
-                .Where(ap => ap.RequestorID == int.Parse(currentUserId) && ap.Status == AccessPermissionStatus.Approved)
-                .ToListAsync();
-            var approvedUsersId = accessPermissions.Select(ap => ap.TargetId).ToList();
-
-            // Danh sách các tài khoản sẽ được giải mã
-            var approvedUsers = users.Where(u => !approvedUsersId.Contains(u.Id)).ToList();
-
-            for (var i = 0; i < approvedUsers.Count; i++)
-            {
-                approvedUsers[i] = DecryptUser(approvedUsers[i], pinCode);
-            }
-
-            // Danh sách chỉ còn những tài khoản sẽ bị mask
-            users.RemoveAll(u => approvedUsersId.Contains(u.Id));
-            MaskUsersInfo(users);
-
-            users.InsertRange(0, approvedUsers);
-
-            var model = new UsersViewModel
-            {
-                CurrentUser = currentDecryptedUser,
-                UsersList = users
-            };
-
-            return RedirectToAction("Index", model);
         }
 
         [HttpGet("details/{id}")]
@@ -236,6 +217,7 @@ namespace CSAT_BMTT.Controllers
                 var decryptedKeys = DecryptKeys(encryptedUser, pinCode);
                 return new User
                 {
+                    Id = encryptedUser.Id,
                     UserName = AesHelper.Decrypt(encryptedUser.CitizenIdentificationNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey),
                     CitizenIdentificationNumber = encryptedUser.CitizenIdentificationNumber,
                     Adress = AesHelper.Decrypt(encryptedUser.Adress, decryptedKeys.IvKey, decryptedKeys.StaticKey),
