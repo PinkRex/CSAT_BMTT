@@ -5,10 +5,7 @@ using CSAT_BMTT.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
-using System.Transactions;
 
 namespace CSAT_BMTT.Controllers
 {
@@ -42,7 +39,7 @@ namespace CSAT_BMTT.Controllers
                 TempData["ErrorMessage"] = "User does not exist!";
             }
             bool isDuplicateRequest = await _context.AccessPermission
-                .AnyAsync(ap => ap.RequestorID == int.Parse(requestorId) && ap.TargetId == targetId && ap.Status == AccessPermissionStatus.Pending);
+                .AnyAsync(ap => ap.RequestorID == int.Parse(requestorId) && ap.TargetId == targetId && ap.Status != AccessPermissionStatus.Declined);
 
             if (isDuplicateRequest)
             {
@@ -153,25 +150,32 @@ namespace CSAT_BMTT.Controllers
                 return;
             }
 
-            var approverPinCodesKey = pinCode + approver.CitizenIdentificationNumber[..10];
-            var approverPinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + approver.CitizenIdentificationNumber[..10];
-            var decryptedApproverPrivateKey = AesHelper.Decrypt(approver.PrivateKey, approverPinCodeIv, approverPinCodesKey);
+            try
+            {
+                var approverPinCodesKey = pinCode + approver.CitizenIdentificationNumber[..10];
+                var approverPinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + approver.CitizenIdentificationNumber[..10];
+                var decryptedApproverPrivateKey = AesHelper.Decrypt(approver.PrivateKey, approverPinCodeIv, approverPinCodesKey);
 
-            var approverIvKey = RsaHelper.Decrypt(approver.IvKey, decryptedApproverPrivateKey);
-            var approverStaticKey = RsaHelper.Decrypt(approver.StaticKey, decryptedApproverPrivateKey);
+                var approverIvKey = RsaHelper.Decrypt(approver.IvKey, decryptedApproverPrivateKey);
+                var approverStaticKey = RsaHelper.Decrypt(approver.StaticKey, decryptedApproverPrivateKey);
+                var accessPermission = await _context.AccessPermission.FindAsync(id);
 
-            var accessPermission = await _context.AccessPermission.FindAsync(id);
+                // Mã hóa với publicKey của requestor
+                var encryptIvKey = RsaHelper.Encrypt(approverIvKey, accessPermission.RequestorPublicKey);
+                var encryptStaticKey = RsaHelper.Encrypt(approverStaticKey, accessPermission.RequestorPublicKey);
 
-            // Mã hóa với publicKey của requestor
-            var encryptIvKey = RsaHelper.Encrypt(approverIvKey, accessPermission.RequestorPublicKey);
-            var encryptStaticKey = RsaHelper.Encrypt(approverStaticKey, accessPermission.RequestorPublicKey);
+                accessPermission.TargetIvKey = encryptIvKey;
+                accessPermission.TargetStaticKey = encryptStaticKey;
+                accessPermission.Status = AccessPermissionStatus.Approved;
 
-            accessPermission.TargetIvKey = encryptIvKey;
-            accessPermission.TargetStaticKey = encryptStaticKey;
-            accessPermission.Status = AccessPermissionStatus.Approved;
+                _context.AccessPermission.Update(accessPermission);
+                await _context.SaveChangesAsync();
 
-            _context.AccessPermission.Update(accessPermission);
-            await _context.SaveChangesAsync();
+            } catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Invalid PIN. Please try again.";
+                return;
+            }
         }
 
         public void DeclineRequest([FromForm] int? id)
