@@ -187,18 +187,21 @@ namespace CSAT_BMTT.Controllers
         public async Task DeclineRequest(int? id, string isAccept)
         {
             var accessPermission = await _context.AccessPermission.FindAsync(id);
-            accessPermission.TargetIvKey = null;
-            accessPermission.TargetStaticKey = null;
-            if (isAccept == "0")
+            if (accessPermission != null)
             {
-                accessPermission.Status = AccessPermissionStatus.Declined;
+                accessPermission.TargetIvKey = null;
+                accessPermission.TargetStaticKey = null;
+                if (isAccept == "0")
+                {
+                    accessPermission.Status = AccessPermissionStatus.Declined;
+                }
+                else if (isAccept == "2")
+                {
+                    accessPermission.Status = AccessPermissionStatus.Pending;
+                }
+                _context.AccessPermission.Update(accessPermission);
+                await _context.SaveChangesAsync();
             }
-            else if (isAccept == "2") 
-            {
-                accessPermission.Status = AccessPermissionStatus.Pending;
-            }
-            _context.AccessPermission.Update(accessPermission);
-            await _context.SaveChangesAsync();
         }
     }
 }
