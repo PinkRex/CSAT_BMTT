@@ -49,13 +49,13 @@
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="PhoneNumber" class="form-label fw-semibold">Phone Number</label>
-                    <input asp-for="PhoneNumber" class="form-control border" placeholder="Enter Your Phone" required />
+                    <input asp-for="PhoneNumber" maxlength="10" class="form-control border" placeholder="Enter Your Phone" required />
                     <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label asp-for="ATM" class="form-label fw-semibold">ATM Number</label>
-                    <input asp-for="ATM" class="form-control border" placeholder="Enter Your ATM Number" required />
+                    <input asp-for="ATM" maxlength="16" class="form-control border" placeholder="Enter Your ATM Number" required />
                     <span asp-validation-for="ATM" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 mb-3">
