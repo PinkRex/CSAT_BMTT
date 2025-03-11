@@ -94,6 +94,59 @@ namespace CSAT_BMTT.Controllers
             return View(user);
         }
 
+        [HttpPost("approveddetails")]
+        public async Task<IActionResult> ApprovedDetails([FromForm] int? approverId, [FromForm] string pinCode)
+        {
+            if (approverId == null) return NotFound();
+            var approver = await _context.User.FirstOrDefaultAsync(m => m.Id == approverId);
+            if (approver == null) return NotFound();
+            
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUser = await _context.User.FindAsync(int.Parse(currentUserId));
+
+            var pinCodesKey = pinCode + currentUser.CitizenIdentificationNumber[..10];
+            var pinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + currentUser.CitizenIdentificationNumber[..10];
+
+            var decryptedPrivateKey = AesHelper.Decrypt(currentUser.PrivateKey, pinCodeIv, pinCodesKey);
+
+            var permission = await _context.AccessPermission.FirstOrDefaultAsync(ap => ap.TargetId == approverId && ap.RequestorID == int.Parse(currentUserId) && ap.Status == AccessPermissionStatus.Approved);
+
+            if (permission == null) return NotFound();
+            try
+            {
+                var targetIvKey = RsaHelper.Decrypt(permission.TargetIvKey, decryptedPrivateKey);
+                var targetStaticKey = RsaHelper.Decrypt(permission.TargetStaticKey, decryptedPrivateKey);
+
+                var decryptApprover = new User
+                {
+                    Id = approver.Id,
+                    UserName = AesHelper.Decrypt(approver.CitizenIdentificationNumber, targetIvKey, targetStaticKey),
+                    CitizenIdentificationNumber = approver.CitizenIdentificationNumber,
+                    Adress = AesHelper.Decrypt(approver.Adress, targetIvKey, targetStaticKey),
+                    ATM = AesHelper.Decrypt(approver.ATM, targetIvKey, targetStaticKey),
+                    Birthday = AesHelper.Decrypt(approver.Birthday, targetIvKey, targetStaticKey),
+                    Email = AesHelper.Decrypt(approver.Email, targetIvKey, targetStaticKey),
+                    Name = approver.Name,
+                    PhoneNumber = AesHelper.Decrypt(approver.PhoneNumber, targetIvKey, targetStaticKey),
+                };
+
+                return View("Details", decryptApprover);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Invalid PIN. Please try again.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpPost("check-pin-requirement")]
+        public async Task<IActionResult> CheckPinRequirement([FromBody] PinCheckRequest request)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            bool requiresPin = await RequirePinCode(request.UserId, int.Parse(currentUserId));
+            return Json(new { requiresPin });
+        }
+
         [HttpPost("edit/{id}")]
         [ActionName("EditPin")]
         public async Task<IActionResult> EditPin([FromForm] PinCodeDto pinCodeDto)
@@ -151,23 +204,12 @@ namespace CSAT_BMTT.Controllers
             return View(userModel);
         }
 
-        [HttpGet("delete/{id}")]
-        public async Task<IActionResult> Delete(int? id)
+        private async Task<bool> RequirePinCode(int otherId, int currentUserId)
         {
-            if (id == null) return NotFound();
-            var user = await _context.User.FirstOrDefaultAsync(m => m.Id == id);
-            if (user == null) return NotFound();
-            return View(user);
-        }
-
-        [HttpPost("delete/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var user = await _context.User.FindAsync(id);
-            if (user != null) _context.User.Remove(user);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            var accessPermission = await _context.AccessPermission
+                .Where(ap => ap.RequestorID == currentUserId && ap.TargetId == otherId && ap.Status == AccessPermissionStatus.Approved)
+                .ToListAsync();
+            return accessPermission.Count > 0;
         }
 
         private bool UserExists(int id)

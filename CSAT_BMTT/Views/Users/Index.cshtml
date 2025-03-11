@@ -73,9 +73,9 @@
                                 @(item.Birthday.ToString().Length > 8 ? item.Birthday.ToString().Substring(0, 8) + "..." : item.Birthday.ToString())
                             </td>
                             <td class="text-center">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
+                                <button class="btn btn-outline-dark btn-sm details-btn" data-user-id="@item.Id">
                                     <i class="bi bi-eye"></i> Details
-                                </a>
+                                </button>
                             </td>
                         </tr>
                         index++;
@@ -112,7 +112,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="showApprovedUsersModalLabel">Enter PIN to Show Approved Users</h5>
+                <h5 class="modal-title" id="showApprovedUsersModalLabel">PIN Code</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
@@ -130,3 +130,56 @@
         </div>
     </div>
 </div>
+
+
+<div class="modal fade" id="enterPinModal" tabindex="-1" aria-labelledby="enterPinModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">PIN Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="verifyPinForm" asp-controller="Users" asp-action="ApprovedDetails" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="approverId" id="approverId">
+                    <input type="password" name="pinCode" class="form-control" placeholder="Enter PIN Code" maxlength="6" required>
+                </div>
+            </form>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="verifyPinForm">Proceed</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".details-btn").forEach(button => {
+            button.addEventListener("click", function (event) {
+                event.preventDefault();
+
+                let userId = this.dataset.userId;
+
+                fetch("./Users/check-pin-requirement", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.requiresPin) {
+                            document.getElementById("approverId").value = userId;
+                            let pinModal = new bootstrap.Modal(document.getElementById("enterPinModal"));
+                            pinModal.show();
+                        } else {
+                            window.location.href = `./Users/Details/${userId}`;
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+            });
+        });
+    });
+</script>

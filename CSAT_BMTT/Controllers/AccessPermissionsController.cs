@@ -61,7 +61,7 @@ namespace CSAT_BMTT.Controllers
             await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("UpdateRequests");
 
-            return View("Index", accessPermission);
+            return await RequestList();
         }
 
         [HttpGet("requests")]

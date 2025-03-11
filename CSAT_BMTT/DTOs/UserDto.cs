@@ -31,4 +31,9 @@ namespace CSAT_BMTT.DTOs
         public int Id { get; set; }
         public string? PinCode { get; set; }
     }
+
+    public class PinCheckRequest
+    {
+        public int UserId { get; set; }
+    }
 }
