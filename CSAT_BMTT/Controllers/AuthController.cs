@@ -98,8 +98,8 @@ namespace CSAT_BMTT.Controllers
             {
                 var pinCodesKey = model.PinCode + model.CitizenIdentificationNumber[..10];
                 var pinCodeIv = string.Concat(Enumerable.Repeat(model.PinCode, 9)) + model.CitizenIdentificationNumber[..10];
-                var staticKey = AesHelper.GenerateAesStaticKey(16);
-                var ivKey = AesHelper.GenerateAesStaticKey(64);
+                var staticKey = AesHelper.GenerateKey(16);
+                var ivKey = AesHelper.GenerateKey(64);
 
                 var keys = RsaHelper.GenerateKey();
                 string publicKey = keys["public_key"];

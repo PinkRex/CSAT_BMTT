@@ -430,7 +430,7 @@ namespace CSAT_BMTT.Utils
 
         }
 
-        public static string GenerateAesStaticKey(int size)
+        public static string GenerateKey(int size)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             StringBuilder result = new StringBuilder(size);
