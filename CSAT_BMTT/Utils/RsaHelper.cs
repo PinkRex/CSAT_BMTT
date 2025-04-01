@@ -87,7 +87,7 @@ namespace CSAT_BMTT.Utils
                     break;
             }
 
-            for (BigInteger i = ZERO; i <= new BigInteger(9); i++)
+            for (BigInteger i = ZERO; i <= new BigInteger(1000000000); i++)
             {
                 BigInteger x = ONE + i * z;
                 if (x % e == ZERO)
