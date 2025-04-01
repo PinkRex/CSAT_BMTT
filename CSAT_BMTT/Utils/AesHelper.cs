@@ -207,12 +207,6 @@ namespace CSAT_BMTT.Utils
             state[3, 3] = temp;
         }
 
-        private static byte XTime(byte x)
-        {
-            int ux = x & 0xff;
-            return (byte)(((ux << 1) ^ (((ux >> 7) & 1) * 0x1b)) & 0xff);
-        }
-
         private static byte Multiply(byte x, byte y)
         {
             int ux = (x & 0xFF);
@@ -237,23 +231,18 @@ namespace CSAT_BMTT.Utils
 
         private static void MixColumns()
         {
-            byte Tmp, Tm, t;
+            byte a, b, c, d;
             for (int i = 0; i < 4; i++)
             {
-                t = state[0, i];
-                Tmp = (byte)(state[0, i] ^ state[1, i] ^ state[2, i] ^ state[3, i]);
-                Tm = (byte)(state[0, i] ^ state[1, i]);
-                Tm = XTime(Tm);
-                state[0, i] ^= (byte)(Tm ^ Tmp);
-                Tm = (byte)(state[1, i] ^ state[2, i]);
-                Tm = XTime(Tm);
-                state[1, i] ^= (byte)(Tm ^ Tmp);
-                Tm = (byte)(state[2, i] ^ state[3, i]);
-                Tm = XTime(Tm);
-                state[2, i] ^= (byte)(Tm ^ Tmp);
-                Tm = (byte)(state[3, i] ^ t);
-                Tm = XTime(Tm);
-                state[3, i] ^= (byte)(Tm ^ Tmp);
+                a = state[0, i];
+                b = state[1, i];
+                c = state[2, i];
+                d = state[3, i];
+
+                state[0, i] = (byte)(Multiply(a, 0x02) ^ Multiply(b, 0x03) ^ Multiply(c, 0x01) ^ Multiply(d, 0x01));
+                state[1, i] = (byte)(Multiply(a, 0x01) ^ Multiply(b, 0x02) ^ Multiply(c, 0x03) ^ Multiply(d, 0x01));
+                state[2, i] = (byte)(Multiply(a, 0x01) ^ Multiply(b, 0x01) ^ Multiply(c, 0x02) ^ Multiply(d, 0x03));
+                state[3, i] = (byte)(Multiply(a, 0x03) ^ Multiply(b, 0x01) ^ Multiply(c, 0x01) ^ Multiply(d, 0x02));
             }
         }
 
