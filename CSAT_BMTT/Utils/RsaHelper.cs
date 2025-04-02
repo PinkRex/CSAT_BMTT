@@ -14,35 +14,16 @@ namespace CSAT_BMTT.Utils
 
         public static bool IsProbablePrime(BigInteger n, int k)
         {
-            if (n == ONE) return false;
-            if (n < THREE) return true;
+            if (n < 2) return false;
 
-            int s = 0;
-            BigInteger d = n - ONE;
-            while (d % TWO == 0)
+            if (n == 2 || n == 3) return true;
+
+            if (n % 2 == 0) return false;
+            for (BigInteger i = 3; i * i <= n; i += 2)
             {
-                s++;
-                d /= TWO;
+                if (n % i == 0)
+                    return false;
             }
-
-            Random rnd = new Random();
-            for (int i = 0; i < k; i++)
-            {
-                BigInteger a = RandomBigInteger(TWO, n - ONE, rnd);
-                BigInteger x = BigInteger.ModPow(a, d, n);
-                if (x == ONE || x == n - ONE) continue;
-
-                int r = 0;
-                for (; r < s; r++)
-                {
-                    x = BigInteger.ModPow(x, TWO, n);
-                    if (x == ONE) return false;
-                    if (x == n - ONE) break;
-                }
-
-                if (r == s) return false;
-            }
-
             return true;
         }
 
