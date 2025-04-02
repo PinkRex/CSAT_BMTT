@@ -55,7 +55,8 @@ namespace CSAT_BMTT.Controllers
 
                 for (var i = 0; i < approvedUsers.Count; i++)
                 {
-                    approvedUsers[i] = DecryptUser(approvedUsers[i], pinCode);
+                    var accessPermission = accessPermissions.Where(a => a.TargetId == approvedUsers[i].Id).ToList().FirstOrDefault();
+                    approvedUsers[i] = DecryptUser(approvedUsers[i], pinCode, currentUser.CitizenIdentificationNumber, currentUser.PrivateKey, accessPermission.TargetIvKey, accessPermission.TargetStaticKey);
                 }
 
                 if (!TempData.Any())
@@ -252,11 +253,48 @@ namespace CSAT_BMTT.Controllers
             );
         }
 
+        private (string IvKey, string StaticKey) DecryptKeys(User user, string pinCode, string citizenIdentificationNumber, string privateKey, string targetIvKey, string targetsKey)
+        {
+            var pinCodesKey = pinCode + citizenIdentificationNumber[..10];
+            var pinCodeIv = string.Concat(Enumerable.Repeat(pinCode, 9)) + citizenIdentificationNumber[..10];
+            var decryptedPrivateKey = AesHelper.Decrypt(privateKey, pinCodeIv, pinCodesKey);
+            return
+            (
+                IvKey: RsaHelper.Decrypt(targetIvKey, decryptedPrivateKey),
+                StaticKey: RsaHelper.Decrypt(targetsKey, decryptedPrivateKey)
+            );
+        }
+
         private User DecryptUser(User encryptedUser, string pinCode)
         {
             try
             {
                 var decryptedKeys = DecryptKeys(encryptedUser, pinCode);
+                return new User
+                {
+                    Id = encryptedUser.Id,
+                    UserName = AesHelper.Decrypt(encryptedUser.CitizenIdentificationNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    CitizenIdentificationNumber = encryptedUser.CitizenIdentificationNumber,
+                    Adress = AesHelper.Decrypt(encryptedUser.Adress, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    ATM = AesHelper.Decrypt(encryptedUser.ATM, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    Birthday = AesHelper.Decrypt(encryptedUser.Birthday, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    Email = AesHelper.Decrypt(encryptedUser.Email, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                    Name = encryptedUser.Name,
+                    PhoneNumber = AesHelper.Decrypt(encryptedUser.PhoneNumber, decryptedKeys.IvKey, decryptedKeys.StaticKey),
+                };
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Invalid PIN. Please try again.";
+                return null;
+            }
+        }
+
+        private User DecryptUser(User encryptedUser, string pinCode, string citizenIdentificationNumber, string privateKey, string targetIvKey, string targetsKey)
+        {
+            try
+            {
+                var decryptedKeys = DecryptKeys(encryptedUser, pinCode, citizenIdentificationNumber, privateKey, targetIvKey, targetsKey);
                 return new User
                 {
                     Id = encryptedUser.Id,
